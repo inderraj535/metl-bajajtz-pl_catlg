@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BAJAJ Spare Parts Price List</title>
+<script src="data.js"></script>
+<script src="dealer.js"></script>
+<style>
+  :root { --blue:#1F4E78; --light:#EEF4FA; --line:#D6DEE8; --muted:#6B7785; --ok:#2E7D32; --warn:#B26A00; --red:#B3261E; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Arial, Helvetica, sans-serif; color:#1d2530; background:#F6F8FB; }
+  header { background:var(--blue); color:#fff; padding:14px 20px; display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; justify-content:space-between; }
+  .logos { display:flex; gap:10px; align-items:center; }
+  .logo { height:64px; width:64px; border-radius:8px; display:block; }
+  .brand h1 { font-size:20px; margin:0; font-weight:800; letter-spacing:.3px; }
+  .brand .tag { font-size:13px; opacity:.9; margin-top:3px; }
+  .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
+  .field { display:flex; flex-direction:column; gap:3px; }
+  .field label { font-size:12px; color:#dfe8f2; font-weight:700; }
+  select, input[type=text] { font-size:15px; padding:8px 10px; border:1px solid #c9d3df; border-radius:6px; background:#fff; color:#1d2530; }
+  input[type=text].search { min-width:240px; }
+  main { display:grid; grid-template-columns: 1fr 370px; gap:16px; padding:16px 20px; align-items:start; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  .card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .meta { color:var(--muted); font-size:13px; margin:0 0 10px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { padding:8px; border-bottom:1px solid #edf1f6; text-align:left; vertical-align:middle; }
+  th { background:var(--light); font-weight:700; color:#33465c; position:sticky; top:0; }
+  td.num, th.num { text-align:right; white-space:nowrap; }
+  td.center, th.center { text-align:center; }
+  .sec { color:var(--muted); font-size:12px; }
+  .nopr { color:var(--warn); font-size:12px; }
+  .dealer { color:#4b3b8a; font-weight:700; }
+  button { font-size:13px; padding:6px 10px; border-radius:6px; border:1px solid var(--blue); background:#fff; color:var(--blue); cursor:pointer; white-space:nowrap; }
+  button:hover { background:var(--light); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--blue); color:#fff; }
+  button.primary:hover { background:#173b5c; }
+  button.added { background:var(--ok); border-color:var(--ok); color:#fff; }
+  button.danger { color:var(--red); border-color:var(--red); }
+  button.staff { background:#fff; color:var(--blue); border-color:#fff; font-weight:700; }
+  .btns { display:flex; gap:6px; justify-content:flex-end; }
+  .count { font-size:13px; color:var(--muted); margin:6px 0 0; }
+  .cust { display:flex; flex-direction:column; gap:4px; margin:8px 0 10px; }
+  .cust label { font-size:13px; font-weight:700; color:#33465c; }
+  .cust input { width:100%; }
+  .cart-row { display:block; padding:9px 0; border-bottom:1px solid #edf1f6; }
+  .cart-row .t { font-weight:700; font-size:14px; }
+  .cart-row .s { color:var(--muted); font-size:12px; }
+  .qty { display:flex; align-items:center; gap:6px; margin-top:4px; }
+  .qty input { width:56px; text-align:center; font-size:14px; padding:4px; border:1px solid #c9d3df; border-radius:5px; }
+  .rm { margin-top:6px; }
+  .totals { margin-top:12px; font-size:14px; }
+  .totals div { display:flex; justify-content:space-between; padding:3px 0; }
+  .totals .grand { font-weight:700; font-size:16px; border-top:1px solid var(--line); margin-top:4px; padding-top:6px; }
+  .empty { color:var(--muted); font-size:14px; padding:12px 0; }
+  .cart-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .hint { font-size:12px; color:var(--muted); }
+  .badge { display:inline-block; background:#E8F5E9; color:var(--ok); border-radius:10px; padding:2px 8px; font-size:11px; font-weight:700; margin-left:6px; }
+  /* modals */
+  .modal { position:fixed; inset:0; background:rgba(10,20,35,.72); display:none; align-items:center; justify-content:center; padding:16px; z-index:50; }
+  .modal.open { display:flex; }
+  .modal-box { background:#fff; border-radius:10px; max-width:1100px; width:100%; max-height:95vh; display:flex; flex-direction:column; overflow:hidden; }
+  .modal-box.small { max-width:380px; }
+  .modal-head { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .modal-head .ttl { font-weight:700; }
+  .modal-head .sub { font-size:12px; color:var(--muted); }
+  .modal-body { overflow:auto; padding:10px; background:#f3f5f8; text-align:center; }
+  .modal-body img { max-width:100%; height:auto; background:#fff; border:1px solid #dde3ea; }
+  .modal-foot { padding:10px 16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .form { padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .form input { width:100%; }
+  .err { color:var(--red); font-size:13px; min-height:16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logos">
+    <img src="logo-bajaj-genuine.png" alt="Bajaj Genuine Parts" class="logo">
+    <img src="logo-metl.png" alt="METL Group" class="logo">
+  </div>
+  <div class="brand">
+    <h1>BAJAJ SPARE PARTS PRICE LIST</h1>
+    <div class="tag">Original Bajaj Parts. Affordable Prices. Trusted Quality</div>
+  </div>
+  <div class="controls">
+    <div class="field">
+      <label for="vehicle">1. Select your vehicle</label>
+      <select id="vehicle"></select>
+    </div>
+    <div class="field">
+      <label for="model">2. Select model</label>
+      <select id="model"></select>
+    </div>
+    <div class="field">
+      <label for="search">Search part</label>
+      <input type="text" id="search" class="search" placeholder="Part no or name…" autocomplete="off">
+    </div>
+    <button class="staff" id="staffBtn">Staff login</button>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <p class="meta" id="modelMeta"></p>
+    <div style="overflow:auto; max-height:68vh;">
+      <table>
+        <thead>
+          <tr>
+            <th>Part No</th>
+            <th>Part Name</th>
+            <th class="center">Qty / vehicle</th>
+            <th class="num">Retail Price</th>
+            <th class="num" id="dealerHead" style="display:none">Dealer Price</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="count" id="count"></p>
+  </section>
+
+  <aside class="card">
+    <h3 style="margin:0 0 6px; font-size:16px;">Quote / Order list</h3>
+    <div class="cust">
+      <label for="custName">Customer name</label>
+      <input type="text" id="custName" placeholder="Enter customer name for the quote">
+    </div>
+    <div id="cart"></div>
+    <div class="totals" id="totals"></div>
+    <div class="cart-actions">
+      <button class="primary" id="exportBtn">Export CSV</button>
+      <button class="danger" id="clearBtn">Clear all</button>
+    </div>
+  </aside>
+</main>
+
+<!-- pictorial viewer -->
+<div class="modal" id="picModal" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="ttl" id="picTitle"></div>
+        <div class="sub" id="picSub"></div>
+      </div>
+      <button id="picClose">Close ✕</button>
+    </div>
+    <div class="modal-body">
+      <img id="picImg" alt="Catalogue pictorial">
+      <p id="picNoImg" class="nopr" style="display:none;font-size:14px;padding:20px">Pictorial image not found. Make sure the <b>images</b> folder is uploaded next to index.html.</p>
+    </div>
+    <div class="modal-foot">
+      <button id="picPrev">‹ Previous</button>
+      <span class="hint" id="picPage"></span>
+      <button id="picNext">Next ›</button>
+    </div>
+  </div>
+</div>
+
+<!-- staff login -->
+<div class="modal" id="staffModal" role="dialog" aria-modal="true">
+  <div class="modal-box small">
+    <div class="modal-head">
+      <div class="ttl">Staff login</div>
+      <button id="staffClose">Close ✕</button>
+    </div>
+    <div class="form">
+      <label for="staffKey" class="hint">Enter the staff key to view dealer prices.</label>
+      <input type="text" id="staffKey" autocomplete="off" placeholder="Staff key">
+      <div class="err" id="staffErr"></div>
+      <button class="primary" id="staffUnlock">Unlock dealer prices</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const DATA = window.PARTS_DATA;
+  const MODELS = DATA.models;
+  const PRICES = DATA.prices;
+  const ENC = window.DEALER_ENC;
+  const LIMIT = 300;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const fmt = (n) => Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const VEHICLES = [
+    { id: "2w", label: "PIKI PIKI" },
+    { id: "3w", label: "BAJAJI" },
+  ];
+
+  // ---------- state ----------
+  let vehicle = "2w";
+  let modelIdx = MODELS.findIndex(m => m.div === vehicle);
+  let query = "";
+  let DEALER = null;          // decrypted dealer prices, only while staff is logged in
+  let cart = loadCart();
+  let custName = loadName();
+  let pic = { parts: [], idx: 0 };
+
+  function loadCart() { try { return JSON.parse(localStorage.getItem("partsCart") || "[]"); } catch (e) { return []; } }
+  function saveCart() { try { localStorage.setItem("partsCart", JSON.stringify(cart)); } catch (e) {} }
+  function loadName() { try { return localStorage.getItem("partsCustName") || ""; } catch (e) { return ""; } }
+  function saveName() { try { localStorage.setItem("partsCustName", custName); } catch (e) {} }
+
+  // ---------- pricing ----------
+  function retailFor(model, part) {
+    const list = PRICES[part];
+    if (!list || !list.length) return null;
+    return list.find(x => x.div === model.div) || list.find(x => !x.div) || null;
+  }
+  function dealerFor(part, div) {
+    if (!DEALER) return null;
+    const v = DEALER[part + "|" + (div || "none")];
+    return (v === undefined) ? null : v;
+  }
+
+  // ---------- staff login (dealer prices are encrypted with the staff key) ----------
+  const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  async function unlockDealer(key) {
+    if (!ENC) throw new Error("Dealer data missing");
+    const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), "PBKDF2", false, ["deriveKey"]);
+    const aes = await crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: b64(ENC.salt), iterations: ENC.iter, hash: "SHA-256" },
+      km, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(ENC.iv) }, aes, b64(ENC.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  function setStaffButton() {
+    $("staffBtn").textContent = DEALER ? "Logout staff" : "Staff login";
+    $("dealerHead").style.display = DEALER ? "" : "none";
+  }
+  $("staffBtn").addEventListener("click", () => {
+    if (DEALER) { DEALER = null; setStaffButton(); render(); return; }
+    $("staffKey").value = ""; $("staffErr").textContent = "";
+    $("staffModal").classList.add("open"); setTimeout(() => $("staffKey").focus(), 50);
+  });
+  async function doUnlock() {
+    const key = $("staffKey").value.trim();
+    if (!key) { $("staffErr").textContent = "Enter the staff key."; return; }
+    try {
+      DEALER = await unlockDealer(key);
+      $("staffModal").classList.remove("open");
+      setStaffButton(); render();
+    } catch (e) {
+      DEALER = null;
+      $("staffErr").textContent = (e && e.name === "OperationError") ? "Incorrect staff key." : "Could not unlock: " + (e && e.message || e);
+    }
+  }
+  $("staffUnlock").addEventListener("click", doUnlock);
+  $("staffKey").addEventListener("keydown", (ev) => { if (ev.key === "Enter") doUnlock(); });
+  $("staffClose").addEventListener("click", () => $("staffModal").classList.remove("open"));
+  $("staffModal").addEventListener("click", (ev) => { if (ev.target.id === "staffModal") $("staffModal").classList.remove("open"); });
+
+  // ---------- dropdowns: vehicle first, then models for that vehicle ----------
+  const vSel = $("vehicle"), mSel = $("model");
+  VEHICLES.forEach(v => { const o = document.createElement("option"); o.value = v.id; o.textContent = v.label; vSel.appendChild(o); });
+  vSel.value = vehicle;
+  function fillModels() {
+    const list = MODELS.map((m, i) => ({ m, i })).filter(x => x.m.div === vehicle);
+    mSel.innerHTML = "";
+    list.forEach(x => {
+      const o = document.createElement("option");
+      o.value = x.i; o.textContent = x.m.label + "  (" + x.m.parts.length + " parts)";
+      mSel.appendChild(o);
+    });
+    if (!list.some(x => x.i === modelIdx)) modelIdx = list[0].i;
+    mSel.value = modelIdx;
+  }
+  vSel.addEventListener("change", () => { vehicle = vSel.value; modelIdx = -1; fillModels(); render(); });
+  mSel.addEventListener("change", () => { modelIdx = +mSel.value; render(); });
+  $("search").addEventListener("input", (e) => { query = e.target.value.trim().toLowerCase(); render(); });
+  $("custName").value = custName;
+  $("custName").addEventListener("input", (e) => { custName = e.target.value; saveName(); });
+  fillModels();
+
+  // ---------- results ----------
+  function render() {
+    const model = MODELS[modelIdx];
+    $("modelMeta").innerHTML = "Vehicle: <b>" + esc(VEHICLES.find(v => v.id === vehicle).label) + "</b> · Catalogue: <b>" + esc(model.label) + "</b>" + (DEALER ? ' <span class="badge">Staff view</span>' : "");
+    let list = model.parts;
+    if (query) list = list.filter(e => e.p.toLowerCase().includes(query) || e.n.toLowerCase().includes(query));
+    const shown = list.slice(0, LIMIT);
+    const cols = DEALER ? 6 : 5;
+    const rows = shown.map(e => {
+      const pr = retailFor(model, e.p);
+      const name = (pr && pr.name) ? pr.name : e.n;
+      let ret;
+      if (!pr) ret = '<span class="nopr">Not in price list</span>';
+      else if (!pr.ret) ret = '<span class="nopr">Not priced</span>';
+      else ret = fmt(pr.ret);
+      let dealerCell = "";
+      if (DEALER) {
+        const d = dealerFor(e.p, pr ? pr.div : model.div);
+        dealerCell = `<td class="num dealer">${d == null ? '<span class="nopr">—</span>' : fmt(d)}</td>`;
+      }
+      const inCart = cart.find(c => c.key === model.id + "|" + e.p);
+      return `<tr>
+        <td><b>${esc(e.p)}</b></td>
+        <td>${esc(name)}<div class="sec">${esc(e.s.join(" · "))}</div></td>
+        <td class="center">${e.q}</td>
+        <td class="num">${ret}</td>
+        ${dealerCell}
+        <td><div class="btns">
+          <button data-pic="${esc(e.p)}">Pictorial</button>
+          <button class="${inCart ? "added" : "primary"}" data-add="${esc(e.p)}">${inCart ? "Added (" + inCart.qty + ")" : "Add"}</button>
+        </div></td>
+      </tr>`;
+    }).join("");
+    $("rows").innerHTML = rows || `<tr><td colspan="${cols}" class="empty">No parts match your search.</td></tr>`;
+    $("count").textContent = list.length === 0 ? "" :
+      (list.length > LIMIT ? "Showing first " + LIMIT + " of " + list.length + " matches. Refine your search to narrow down." : list.length + " part(s)");
+    renderCart();
+  }
+
+  $("rows").addEventListener("click", (ev) => {
+    const a = ev.target.closest("[data-add]"), p = ev.target.closest("[data-pic]");
+    if (a) addToCart(a.getAttribute("data-add"));
+    if (p) openPic(p.getAttribute("data-pic"));
+  });
+
+  // ---------- quote list ----------
+  function addToCart(part) {
+    const model = MODELS[modelIdx];
+    const key = model.id + "|" + part;
+    const existing = cart.find(c => c.key === key);
+    if (existing) existing.qty += 1;
+    else {
+      const e = model.parts.find(x => x.p === part);
+      const pr = retailFor(model, part);
+      cart.push({ key, modelId: model.id, model: model.label, div: model.div, part,
+                  name: (pr && pr.name) || e.n, ret: pr ? pr.ret : 0, priced: !!(pr && pr.ret), qty: 1 });
+    }
+    saveCart(); render();
+  }
+
+  function renderCart() {
+    const box = $("cart");
+    if (!cart.length) {
+      box.innerHTML = '<div class="empty">No items yet. Use <b>Add</b> on any part.</div>';
+      $("totals").innerHTML = "";
+      return;
+    }
+    box.innerHTML = cart.map((c, i) => `
+      <div class="cart-row">
+        <div class="t">${esc(c.part)}</div>
+        <div class="s">${esc(c.name)}</div>
+        <div class="s">${esc(c.model)} · Retail ${c.priced ? fmt(c.ret) : "n/a"}${DEALER ? " · Dealer " + (dealerFor(c.part, c.div) == null ? "n/a" : fmt(dealerFor(c.part, c.div))) : ""}</div>
+        <div class="qty">
+          <button data-dec="${i}">−</button>
+          <input type="text" value="${c.qty}" data-qty="${i}" inputmode="numeric">
+          <button data-inc="${i}">+</button>
+        </div>
+        <div class="rm"><button class="danger" data-del="${i}">Remove</button></div>
+      </div>`).join("");
+    let rsum = 0, dsum = 0, unpriced = 0;
+    cart.forEach(c => {
+      if (c.priced) rsum += c.ret * c.qty; else unpriced++;
+      const d = dealerFor(c.part, c.div);
+      if (DEALER && d != null) dsum += d * c.qty;
+    });
+    $("totals").innerHTML = `
+      ${DEALER ? `<div><span>Dealer total</span><span>${fmt(dsum)}</span></div>` : ""}
+      <div class="grand"><span>Retail total</span><span>${fmt(rsum)}</span></div>
+      ${unpriced ? `<div class="hint">${unpriced} item(s) without a price are excluded from totals.</div>` : ""}`;
+  }
+
+  $("cart").addEventListener("click", (ev) => {
+    const t = ev.target;
+    const idx = t.getAttribute("data-inc") ?? t.getAttribute("data-dec") ?? t.getAttribute("data-del");
+    if (idx === null) return;
+    const i = +idx;
+    if (t.hasAttribute("data-inc")) cart[i].qty += 1;
+    else if (t.hasAttribute("data-dec")) cart[i].qty = Math.max(1, cart[i].qty - 1);
+    else if (t.hasAttribute("data-del")) cart.splice(i, 1);
+    saveCart(); render();
+  });
+  $("cart").addEventListener("change", (ev) => {
+    const i = ev.target.getAttribute("data-qty");
+    if (i === null) return;
+    const v = parseInt(ev.target.value, 10);
+    if (v > 0) cart[+i].qty = v; else ev.target.value = cart[+i].qty;
+    saveCart(); render();
+  });
+  $("clearBtn").addEventListener("click", () => {
+    if (cart.length && confirm("Clear all items from the list?")) { cart = []; saveCart(); render(); }
+  });
+
+  // ---------- CSV export (dealer columns only in staff mode) ----------
+  $("exportBtn").addEventListener("click", () => {
+    if (!cart.length) { alert("The list is empty."); return; }
+    const staff = !!DEALER;
+    const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+    const lines = [];
+    lines.push(q("Customer") + "," + q(custName.trim() || "-"));
+    lines.push(q("Date") + "," + q(new Date().toLocaleDateString("en-GB")));
+    lines.push("");
+    lines.push([...["Model","Part No","Part Name","Qty","Retail Price","Retail Total"], ...(staff ? ["Dealer Price","Dealer Total"] : [])].map(q).join(","));
+    let r = 0, d = 0;
+    cart.forEach(c => {
+      const rt = c.priced ? c.ret * c.qty : 0; r += rt;
+      const dv = dealerFor(c.part, c.div); const dt = (staff && dv != null) ? dv * c.qty : 0; d += dt;
+      const row = [c.model, c.part, c.name, c.qty, c.priced ? c.ret.toFixed(2) : "", rt.toFixed(2)];
+      if (staff) row.push(dv != null ? dv.toFixed(2) : "", dt.toFixed(2));
+      lines.push(row.map(q).join(","));
+    });
+    const totals = ["","","TOTAL","","", r.toFixed(2)];
+    if (staff) totals.push("", d.toFixed(2));
+    lines.push(totals.map(q).join(","));
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    const safe = (custName.trim() || "quote").replace(/[^A-Za-z0-9_-]+/g, "_");
+    a.href = URL.createObjectURL(blob); a.download = "quote_" + safe + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  // ---------- pictorial ----------
+  function openPic(part) {
+    const model = MODELS[modelIdx];
+    const e = model.parts.find(x => x.p === part);
+    if (!e) return;
+    pic = { parts: e.pg, idx: 0, model, part, sections: e.s };
+    showPic();
+    $("picModal").classList.add("open");
+  }
+  function showPic() {
+    const page = pic.parts[pic.idx];
+    $("picTitle").textContent = pic.part + " — " + pic.model.label;
+    $("picSub").textContent = "Catalogue section: " + pic.sections.join(" · ");
+    const img = $("picImg");
+    img.onerror = () => { img.onerror = null; img.removeAttribute("src"); $("picNoImg").style.display = "block"; };
+    $("picNoImg").style.display = "none";
+    img.src = "images/" + pic.model.img + "/p" + page + ".jpg";
+    $("picPage").textContent = "Catalogue page " + page + " (" + (pic.idx + 1) + " of " + pic.parts.length + ")";
+    $("picPrev").disabled = pic.idx === 0;
+    $("picNext").disabled = pic.idx >= pic.parts.length - 1;
+  }
+  $("picPrev").addEventListener("click", () => { if (pic.idx > 0) { pic.idx--; showPic(); } });
+  $("picNext").addEventListener("click", () => { if (pic.idx < pic.parts.length - 1) { pic.idx++; showPic(); } });
+  $("picClose").addEventListener("click", () => $("picModal").classList.remove("open"));
+  $("picModal").addEventListener("click", (ev) => { if (ev.target.id === "picModal") $("picModal").classList.remove("open"); });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") { $("picModal").classList.remove("open"); $("staffModal").classList.remove("open"); }
+    if (!$("picModal").classList.contains("open")) return;
+    if (ev.key === "ArrowLeft") $("picPrev").click();
+    if (ev.key === "ArrowRight") $("picNext").click();
+  });
+
+  setStaffButton();
+  render();
+})();
+</script>
+</body>
+</html>
